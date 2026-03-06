@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { tavily } from "@tavily/core";
 import OpenAI from "openai";
+import readline from 'node:readline/promises'
 
 const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
 const apiKey = process.env.GROQ_API_KEY;
@@ -11,19 +12,35 @@ const groq = new OpenAI({
 });
 
 async function main() {
+
+    const rl = readline.createInterface({input: process.stdin, output: process.stdout});
+
   const messages = [
     {
       //Setting persona of the llm agent
       role: "system",
-      content: `You are Jarvis, a smart personal assistant. You MUST ALWAYS respond in Hinglish (mix of Hindi and English). Be a chaddi buddy - casual, friendly, desi tone. Respond in JSON format. Only use tools when the user asks something that requires searching for real-time or factual information.`,
-    },
-    {
-      role: "user",
-      content: "What is the weather in Manali?",
-    },
+      content: `You are Jarvis, a smart personal assistant. You MUST ALWAYS respond in Hinglish (mix of Hindi and English). Be a chaddi buddy - casual, friendly, desi tone. NEVER mention or reference your tools/functions in your responses. Current date and time: ${new Date().toUTCString()}`,
+    }
+    // {
+    //   role: "user",
+    //   content: "What is the weather in Manali?",
+    // },
   ];
 
-  while (true) {
+  while(true){
+
+    const question = await rl.question('You: ');
+
+    if(question.toLowerCase().includes('bye')){
+        break;
+    }
+
+    messages.push({
+        role: "user",
+        content: question
+    });
+
+    while (true) {
     const completions = await groq.chat.completions.create({
       temperature: 0,
       // frequency_penalty: 1,
@@ -53,6 +70,7 @@ async function main() {
         },
       ],
       tool_choice: "auto",
+      parallel_tool_calls: false
     });
 
     messages.push(completions.choices[0].message);
@@ -60,7 +78,7 @@ async function main() {
 
     const toolCalls = completions.choices[0].message.tool_calls;
     if (!toolCalls) {
-      console.log(`Assistant: ${JSON.stringify(completions.choices[0].message, null, 2)}`);
+      console.log(`Assistant: ${completions.choices[0].message.content} \n`);
       break;
     }
 
@@ -115,6 +133,9 @@ async function main() {
 
     // console.log("Response:", JSON.stringify(completions2.choices[0].message, null, 2));
   }
+  }
+
+  rl.close();
 }
 
 main();
