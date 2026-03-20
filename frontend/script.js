@@ -32,7 +32,7 @@ async function generate(text){
         msgElem.textContent = text;
         chatContainer?.appendChild(msgElem);
         input.value = "";
-
+        askBtn.disabled = true;
         chatContainer.appendChild(loadingElem)
 
         //Call server
@@ -42,6 +42,7 @@ async function generate(text){
         assistantMsgElem.className = "max-w-fit";
         assistantMsgElem.textContent = assistantMessage;
         loadingElem.remove();
+        askBtn.disabled = false;
         chatContainer?.appendChild(assistantMsgElem);
 
 
