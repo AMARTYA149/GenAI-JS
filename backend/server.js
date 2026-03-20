@@ -12,11 +12,15 @@ app.get('/', (req, res) => {
 });
 
 app.post('/chat', async (req, res)=>{
-    const {message} = req.body;
-    console.log('Message', message);
+    const {message, threadId} = req.body;
+    
+    if(!message || !threadId){
+        res.json(400).json({message: "All fields are required!"});
+        return
+    }
 
     try {
-        const result = await generate(message);
+        const result = await generate(message, threadId);
         res.json({message: result});
     } catch (error) {
         console.error('Error generating response:', error);

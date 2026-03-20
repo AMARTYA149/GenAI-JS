@@ -1,20 +1,22 @@
 import "dotenv/config";
 import { tavily } from "@tavily/core";
 import OpenAI from "openai";
+import NodeCache from "node-cache";
 // import readline from 'node:readline/promises'
 
 const tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
 const apiKey = process.env.GROQ_API_KEY;
+const cache = new NodeCache({stdTTL: 60 * 60 * 24}); //24 hours
 
 const groq = new OpenAI({
     apiKey: apiKey,
     baseURL: "https://api.groq.com/openai/v1",
 });
 
-export async function generate(userMessage) {
+export async function generate(userMessage, threadId) {
 
 
-    const messages = [
+    const baseMessages = [
         {
             //Setting persona of the llm agent
             role: "system",
@@ -41,6 +43,8 @@ export async function generate(userMessage) {
         //   content: "What is the weather in Manali?",
         // },
     ];
+
+    const messages = cache.get(threadId) ?? baseMessages;
 
     messages.push({
         role: "user",
@@ -84,7 +88,11 @@ export async function generate(userMessage) {
         // console.log(`Messages ${messages}`);
 
         const toolCalls = completions.choices[0].message.tool_calls;
+
         if (!toolCalls) {
+            //here we end the chatbot response
+            cache.set(threadId, messages);
+            console.log(JSON.stringify(cache.data));
             return completions.choices[0].message.content;
         }
 

@@ -1,6 +1,11 @@
 const input = document.querySelector('#input');
 const chatContainer = document.querySelector('#chat-container');
 const askBtn = document.querySelector('#ask');
+const threadId = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+
+const loadingElem = document.createElement('div');
+loadingElem.className = 'my-6 animate-pulse';
+loadingElem.textContent = 'Thinking...';
 
 async function sendMessage(){
         const text = input?.value.trim();
@@ -28,13 +33,17 @@ async function generate(text){
         chatContainer?.appendChild(msgElem);
         input.value = "";
 
+        chatContainer.appendChild(loadingElem)
+
         //Call server
         const assistantMessage = await callServer(text);
-        
+
         const assistantMsgElem = document.createElement('div');
         assistantMsgElem.className = "max-w-fit";
         assistantMsgElem.textContent = assistantMessage;
+        loadingElem.remove();
         chatContainer?.appendChild(assistantMsgElem);
+
 
 }
 
@@ -44,7 +53,7 @@ async function callServer(inputText)  {
         headers: {
             'content-type': 'application/json',
         },
-        body: JSON.stringify({message: inputText})
+        body: JSON.stringify({threadId, message: inputText})
     });
 
     if(!response.ok){
